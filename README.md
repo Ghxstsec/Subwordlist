@@ -2,52 +2,52 @@
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue)
 ![License](https://img.shields.io/badge/license-MIT-green)
-![Recon](https://img.shields.io/badge/uso-recon%20autorizado-red)
+![Recon](https://img.shields.io/badge/use-authorized%20recon%20only-red)
 
-Generador de **wordlists de subdominios a medida** para recon en bug bounty y
-pentesting. En lugar de usar siempre la misma lista genérica, `subwordlist`
-construye una lista adaptada al objetivo combinando lo que tú sabes de él, lo
-que expone su propia web y las tecnologías que usa.
+**Target-tailored subdomain wordlist generator** for bug bounty and pentesting
+recon. Instead of always throwing the same generic list at every target,
+`subwordlist` builds a list adapted to the target by combining what you know
+about it, what its own website exposes, and the technologies it runs on.
 
 > [!WARNING]
-> **Uso solo autorizado.** Ejecútalo únicamente contra dominios de tu propiedad
-> o dentro del scope de un programa de bug bounty / pentest con permiso
-> explícito. El crawl y las consultas a crt.sh generan tráfico atribuible a ti.
+> **Authorized use only.** Run it only against domains you own or that are in
+> scope of a bug bounty program / pentest with explicit permission. Crawling
+> and crt.sh queries generate traffic attributable to you.
 
 ---
 
-## ✨ Características
+## ✨ Features
 
-- **Palabras del usuario** — nombre de la empresa, productos, nombres internos,
-  marcas... por argumento (`-w`) o desde fichero (`-W`).
-- **Scraping del objetivo**
-  - Crawl BFS limitado al dominio registrable (HTML, enlaces, `src` de
-    scripts/CSS, `action` de formularios, rutas).
-  - `robots.txt` y `sitemap.xml`.
-  - **Certificate Transparency** vía [crt.sh](https://crt.sh) para descubrir
-    subdominios reales de forma pasiva.
-- **Fingerprinting de tecnologías → subdominios probables** — detecta ~30
-  tecnologías por cabeceras, cookies, `<meta generator>` y firmas en HTML/JS, y
-  añade los subdominios que cada stack suele llevar.
-- **Mutaciones** del núcleo de alta señal con afijos de entorno (`dev`,
-  `staging`, `prod`, `uat`, `v1`, `v2`, `legacy`...) y separadores
+- **User-supplied keywords** — company name, products, internal names,
+  brands... via argument (`-w`) or from a file (`-W`).
+- **Target scraping**
+  - BFS crawl restricted to the registrable domain (HTML, links, script/CSS
+    `src`, form `action`, paths).
+  - `robots.txt` and `sitemap.xml`.
+  - **Certificate Transparency** via [crt.sh](https://crt.sh) to passively
+    discover real subdomains.
+- **Technology fingerprinting → likely subdomains** — detects ~30 technologies
+  from headers, cookies, `<meta generator>` and HTML/JS signatures, then adds
+  the subdomains each stack typically comes with.
+- **Mutations** of the high-signal core with environment affixes (`dev`,
+  `staging`, `prod`, `uat`, `v1`, `v2`, `legacy`...) and separators
   (`devapi`, `dev-api`, `dev_api`, `dev.api`).
-- **Modo combinación** (`--combine`) para cruzar palabras entre sí.
-- Salida **deduplicada, ordenada y validada** como etiquetas DNS, en formato
-  etiqueta (`api`) o FQDN (`api.example.com`).
-- Sin resolución DNS: genera la lista y deja el bruteforce a tu herramienta
-  favorita (ffuf, puredns, dnsx, massdns, gobuster...).
+- **Combine mode** (`--combine`) to cross words with each other.
+- **Deduplicated, sorted and DNS-validated** output, as bare labels (`api`) or
+  FQDNs (`api.example.com`).
+- No DNS resolution: it generates the list and leaves bruteforcing to your
+  favorite tool (ffuf, puredns, dnsx, massdns, gobuster...).
 
-## 🔧 Cómo funciona
+## 🔧 How it works
 
 ```
  ┌──────────────────┐  ┌────────────────────────┐  ┌──────────────────────┐
- │ Palabras usuario │  │ Scraping del dominio   │  │ Lista base comunes   │
+ │ User keywords    │  │ Domain scraping        │  │ Common base list     │
  │  -w / -W         │  │ crawl · robots ·       │  │ data/common_...txt   │
  └────────┬─────────┘  │ sitemap · crt.sh       │  └──────────┬───────────┘
           │            └───────┬───────────┬────┘             │
           │                    │           │                  │
-          │            labels / tokens   tecnologías          │
+          │            labels / tokens   technologies         │
           │                    │           │                  │
           │                    │     ┌─────▼──────────┐       │
           │                    │     │ fingerprint.py │       │
@@ -55,16 +55,16 @@ que expone su propia web y las tecnologías que usa.
           │                    │     └─────┬──────────┘       │
           ▼                    ▼           ▼                  ▼
         ┌──────────────────────────────────────────────────────────┐
-        │ generator.py: núcleo + tokens + mutaciones (+ combine)  │
-        │ limpieza → dedupe → orden                               │
+        │ generator.py: core + tokens + mutations (+ combine)      │
+        │ cleanup → dedupe → sort                                  │
         └────────────────────────────┬─────────────────────────────┘
                                      ▼
                               wordlist.txt
 ```
 
-### Ejemplos de tecnología → subdominios
+### Technology → subdomain examples
 
-| Tecnología detectada | Subdominios que se añaden |
+| Detected technology | Subdomains added |
 |---|---|
 | WordPress | `blog`, `wp`, `news`, `cms` |
 | AWS | `s3`, `cdn`, `assets`, `static`, `media`, `files`, `backup`... |
@@ -76,126 +76,117 @@ que expone su propia web y las tecnologías que usa.
 | Laravel | `api`, `app`, `admin`, `horizon`, `telescope` |
 | Swagger / GraphQL | `api`, `docs`, `developer`, `swagger` / `graphql`, `gql` |
 
-El mapa completo está en [`fingerprint.py`](fingerprint.py) (`TECH_SUBDOMAINS`)
-y es fácil de ampliar.
+The full map lives in [`fingerprint.py`](fingerprint.py) (`TECH_SUBDOMAINS`)
+and is easy to extend.
 
-## 📦 Instalación
+## 📦 Installation
 
-Requiere **Python 3.10+**.
+Requires **Python 3.10+**.
 
 ```bash
-git clone https://github.com/<tu-usuario>/subwordlist.git
-cd subwordlist
+git clone https://github.com/Ghxstsec/Subwordlist.git
+cd Subwordlist
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 ```
 
-`tldextract` es opcional pero recomendado: permite separar bien dominios con TLD
-compuesto (`.co.uk`, `.com.ar`...). Sin él se usa un fallback de "últimas dos
-etiquetas".
+`tldextract` is optional but recommended: it correctly splits domains with
+multi-part TLDs (`.co.uk`, `.com.ar`...). Without it, a "last two labels"
+fallback is used.
 
-## 🚀 Uso
+## 🚀 Usage
 
 ```bash
-# Básico: scrapea example.com y saca la wordlist por stdout
+# Basic: scrape example.com and print the wordlist to stdout
 python generate.py example.com
 
-# Con palabras propias y salida a fichero
+# With your own keywords, written to a file
 python generate.py example.com -w acme widgets corp -o wordlist.txt
 
-# Palabras desde fichero, sin crt.sh, salida como FQDN
+# Keywords from a file, no crt.sh, FQDN output
 python generate.py example.com -W keywords.txt --no-crtsh --fqdn -o subs.txt
 
-# Sin tocar la web: solo lista base + tus palabras + mutaciones
+# Don't touch the website: base list + your keywords + mutations only
 python generate.py example.com --no-scrape -w acme -o quick.txt
 
-# Modo agresivo: combina palabras entre sí (mucho más grande, más ruido)
+# Aggressive mode: combine words with each other (much bigger, noisier)
 python generate.py example.com --combine -o big.txt
 ```
 
-Los logs de progreso van a `stderr` y la wordlist a `stdout`, así que puedes
-redirigir o encadenar sin mezclarlos (`python generate.py target.com > wl.txt`).
-Usa `-q` para silenciar los logs.
+Progress logs go to `stderr` and the wordlist to `stdout`, so you can redirect
+or pipe without mixing them (`python generate.py target.com > wl.txt`).
+Use `-q` to silence the logs.
 
-### Opciones
+### Options
 
-| Flag | Descripción | Por defecto |
-|------|-------------|-------------|
-| `domain` | Dominio objetivo (p.ej. `example.com`) | — |
-| `-w, --words` | Palabras clave del usuario (varias) | — |
-| `-W, --wordfile` | Fichero con palabras, una por línea | — |
-| `-o, --output` | Fichero de salida | stdout |
-| `--no-scrape` | No crawlear el sitio | off |
-| `--no-crtsh` | No consultar Certificate Transparency | off |
-| `--no-common` | No incluir la lista base de subdominios comunes | off |
-| `--no-mutate` | No generar mutaciones | off |
-| `--combine` | Combinar palabras entre sí (agresivo) | off |
-| `--max-pages` | Máximo de páginas a crawlear | `40` |
-| `--max-tokens` | Máximo de tokens del contenido a incorporar | `400` |
-| `--http` | Usar http en vez de https | off |
-| `--fqdn` | Salida como `label.dominio` | off |
-| `-q, --quiet` | Sin logs de progreso | off |
+| Flag | Description | Default |
+|------|-------------|---------|
+| `domain` | Target domain (e.g. `example.com`) | — |
+| `-w, --words` | User keywords (multiple) | — |
+| `-W, --wordfile` | File with keywords, one per line | — |
+| `-o, --output` | Output file | stdout |
+| `--no-scrape` | Don't crawl the site | off |
+| `--no-crtsh` | Don't query Certificate Transparency | off |
+| `--no-common` | Don't include the common subdomains base list | off |
+| `--no-mutate` | Don't generate mutations | off |
+| `--combine` | Combine words with each other (aggressive) | off |
+| `--max-pages` | Maximum pages to crawl | `40` |
+| `--max-tokens` | Maximum content tokens to include | `400` |
+| `--http` | Use http instead of https | off |
+| `--fqdn` | Output as `label.domain` | off |
+| `-q, --quiet` | No progress logs | off |
 
-### Ejemplo de salida
-
-```text
-$ python generate.py example.com -w acme -o wl.txt
-[+] Tecnologías detectadas: cloudflare, nginx, wordpress
-[+] Subdominios ya vistos: 12
-[+] Subdominios probables por tecnología: assets, blog, cdn, cms, news, proxy, static, wp, www
-[+] 31842 entradas escritas en wl.txt
-```
-
-## 🎯 Flujo típico en bug bounty
+## 🎯 Typical bug bounty workflow
 
 ```bash
-# 1. Genera la wordlist a partir del dominio en scope
-python generate.py target.com -w marca producto -o wl.txt
+# 1. Generate the wordlist from the in-scope domain
+python generate.py target.com -w brand product -o wl.txt
 
-# 2. Pásala a tu resolver / bruteforcer
+# 2. Feed it to your resolver / bruteforcer
 puredns bruteforce wl.txt target.com -r resolvers.txt
-# o
+# or
 ffuf -w wl.txt -u https://FUZZ.target.com -mc all
 ```
 
-## 🗂️ Estructura
+## 🗂️ Project structure
 
 ```
 subwordlist/
-├── generate.py              # CLI principal
-├── scraper.py               # crawl + robots/sitemap + crt.sh + extracción
-├── fingerprint.py           # firmas de tecnologías + mapa tech → subdominios
-├── generator.py             # mutaciones, combinaciones y ensamblado final
-├── utils.py                 # parsing de dominios y normalización de etiquetas
+├── generate.py              # main CLI
+├── scraper.py               # crawl + robots/sitemap + crt.sh + extraction
+├── fingerprint.py           # technology signatures + tech → subdomain map
+├── generator.py             # mutations, combinations and final assembly
+├── utils.py                 # domain parsing and label normalization
 ├── data/
-│   └── common_subdomains.txt  # lista base (~200 subdominios comunes)
+│   └── common_subdomains.txt  # base list (~200 common subdomains)
 ├── requirements.txt
 └── README.md
 ```
 
-## 🧩 Personalización
+## 🧩 Customization
 
-- **Lista base**: edita `data/common_subdomains.txt` (una etiqueta por línea,
-  `#` para comentarios).
-- **Nuevas tecnologías**: añade un `Signature(...)` en `SIGNATURES` y su entrada
-  en `TECH_SUBDOMAINS` dentro de `fingerprint.py`.
-- **Afijos de entorno**: modifica `ENV_AFFIXES` en `generator.py`.
+- **Base list**: edit `data/common_subdomains.txt` (one label per line, `#` for
+  comments).
+- **New technologies**: add a `Signature(...)` to `SIGNATURES` and its entry to
+  `TECH_SUBDOMAINS` in `fingerprint.py`.
+- **Environment affixes**: tweak `ENV_AFFIXES` in `generator.py`.
 
-## 📝 Notas
+## 📝 Notes
 
-- La herramienta **no resuelve DNS**: solo produce la wordlist. Separar
-  generación y resolución es intencionado.
-- Las mutaciones se aplican solo al núcleo de alta señal (palabras del usuario,
-  subdominios descubiertos, subdominios por tecnología y lista base), no a todos
-  los tokens scrapeados, para no disparar el tamaño con ruido.
-- Con `--combine` la lista puede crecer mucho; úsalo con resolvers rápidos.
+- The tool **does not resolve DNS**: it only produces the wordlist. Keeping
+  generation and resolution separate is intentional.
+- Mutations are applied only to the high-signal core (user keywords,
+  discovered subdomains, technology-derived subdomains and the base list), not
+  to every scraped token, to keep noise and size under control.
+- With `--combine` the list can grow a lot; use it with fast resolvers.
+- CLI log messages are currently in Spanish.
 
 ## ⚖️ Disclaimer
 
-Esta herramienta se proporciona con fines educativos y para pruebas de seguridad
-autorizadas. El autor no se hace responsable del uso indebido. Respeta siempre
-el scope y las reglas de cada programa.
+This tool is provided for educational purposes and authorized security testing
+only. The author is not responsible for any misuse. Always respect the scope and
+rules of each program.
 
-## 📄 Licencia
+## 📄 License
 
 [MIT](LICENSE)
