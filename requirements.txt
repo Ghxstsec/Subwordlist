@@ -1,4 +1,2 @@
 requests>=2.31.0
-# Opcional pero recomendado: split correcto de dominios con TLDs compuestos
-# (.co.uk, .com.ar...). Sin él se usa un fallback de "últimas dos etiquetas".
 tldextract>=5.1.0
